@@ -19,7 +19,7 @@ namespace Linq.HeapSort.Tests
             underTest.BuildHeap();
 
             // Verify Results
-            Assert.AreEqual(99, underTest.Heap[0].Item1);
+            Assert.AreEqual(99, intArray[underTest.HeapMap[0]]);
         }
 
         [Test]
@@ -34,7 +34,7 @@ namespace Linq.HeapSort.Tests
 
             // Verify Results
             Assert.AreEqual(99, result);
-            Assert.AreEqual(98, underTest.Heap[0].Item1);
+            Assert.AreEqual(98, intArray[underTest.HeapMap[0]]);
         }
 
         [Test]

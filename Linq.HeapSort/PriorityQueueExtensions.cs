@@ -13,7 +13,7 @@ namespace Linq.HeapSort
         }
 
         public static IOrderedEnumerable<TSource> OrderBy<TSource, TKey>
-            (this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
+            (this IEnumerable<TSource> source, Func<TSource, TKey> keySelector) where TKey : IComparable<TKey>
         {
             return null;
         }

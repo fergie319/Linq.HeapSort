@@ -22,7 +22,10 @@ namespace Linq.HeapSort
 
         public bool IsSorted { get; private set; }
 
-        public Tuple<TSource, TKey>[] Heap { get; set; }
+        public TSource[] Source { get; private set; }
+
+        // Use this for the implementation where no TKey is needed
+        // public Tuple<TSource, TKey>[] Heap { get; set; }
 
         // TODO: Try out using two arrays, and use the HeapMap as an index array
         //       If performance is still 2X worse than QuickSort, then try a third
@@ -30,11 +33,23 @@ namespace Linq.HeapSort
         //       of the problem.
         public int[] HeapMap { get; set; }
 
+        // Use this for the implementation (x2) for keySelector -
+        // use type constraint for IComparer when no comparer is provided
         public TKey[] KeyMap { get; set; }
 
         public PriorityEnumerable(IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
         {
-            Heap = source.Select(s => Tuple.Create(s, keySelector(s))).ToArray();
+            Source = new TSource[source.Count()];
+            HeapMap = new int[Source.Length];
+            KeyMap = new TKey[Source.Length];
+            var i = 0;
+            foreach (var item in source)
+            {
+                HeapMap[i] = i;
+                Source[i] = item;
+                KeyMap[i] = keySelector(item);
+                i++;
+            }
             TotalSorted = 0;
         }
 
@@ -64,9 +79,9 @@ namespace Linq.HeapSort
         public void BuildHeap(bool minHeap)
         {
             // Loop through the heap array in reverse order
-            for (var i = Heap.Length / 2 - 1; i >= 0; i--)
+            for (var i = HeapMap.Length / 2 - 1; i >= 0; i--)
             {
-                DownHeap(i, Heap.Length);
+                DownHeap(i, HeapMap.Length);
             }
         }
 
@@ -74,23 +89,31 @@ namespace Linq.HeapSort
         /// <returns>Top item off of the heap - the largest item for a max heap, or the smallest for a min heap.  Returns default(T) if no items remain on the heap.</returns>
         public TSource Pop()
         {
-            var root = Tuple.Create(default(TSource), default(TKey));
-            if (Heap.Length - TotalSorted != 0)
+            var root = -1;
+            if (HeapMap.Length - TotalSorted != 0)
             {
-                root = Heap[0];
-                Swap(0, Heap.Length - TotalSorted - 1);
+                root = HeapMap[0];
+                Swap(0, HeapMap.Length - TotalSorted - 1);
                 TotalSorted++;
-                if (Heap.Length - TotalSorted != 0)
+                var remaining = HeapMap.Length - TotalSorted;
+                if (remaining > 1)
                 {
-                    DownHeap(0, Heap.Length - TotalSorted);
+                    DownHeap(0, remaining);
                 }
-                else
+                else if (remaining == 0)
                 {
                     IsSorted = true;
                 }
             }
 
-            return root.Item1;
+            if (root == -1)
+            {
+                return default(TSource);
+            }
+            else
+            {
+                return Source[root];
+            }
         }
 
         /// <summary>Re-heapifies from the given index</summary>
@@ -102,12 +125,12 @@ namespace Linq.HeapSort
             if (!MinHeap)
             {
                 var largest = index;
-                if (leftIndex < n && CompareKeys(Heap[leftIndex].Item2, Heap[largest].Item2) > 0)
+                if (leftIndex < n && CompareKeys(HeapMap[leftIndex], HeapMap[largest]) > 0)
                 {
                     largest = leftIndex;
                 }
 
-                if (rightIndex < n && CompareKeys(Heap[rightIndex].Item2, Heap[largest].Item2) > 0)
+                if (rightIndex < n && CompareKeys(HeapMap[rightIndex], HeapMap[largest]) > 0)
                 {
                     largest = rightIndex;
                 }
@@ -125,12 +148,12 @@ namespace Linq.HeapSort
             else
             {
                 var smallest = index;
-                if (leftIndex < n && CompareKeys(Heap[leftIndex].Item2, Heap[smallest].Item2) < 0)
+                if (leftIndex < n && CompareKeys(HeapMap[leftIndex], HeapMap[smallest]) < 0)
                 {
                     smallest = leftIndex;
                 }
 
-                if (rightIndex < n && CompareKeys(Heap[rightIndex].Item2, Heap[smallest].Item2) < 0)
+                if (rightIndex < n && CompareKeys(HeapMap[rightIndex], HeapMap[smallest]) < 0)
                 {
                     smallest = rightIndex;
                 }
@@ -149,14 +172,14 @@ namespace Linq.HeapSort
 
         private void Swap(int indexA, int indexB)
         {
-            Tuple<TSource, TKey> temp = Heap[indexA];
-            Heap[indexA] = Heap[indexB];
-            Heap[indexB] = temp;
+            int temp = HeapMap[indexA];
+            HeapMap[indexA] = HeapMap[indexB];
+            HeapMap[indexB] = temp;
         }
 
-        protected virtual int CompareKeys(TKey left, TKey right)
+        protected virtual int CompareKeys(int left, int right)
         {
-            return left.CompareTo(right);
+            return KeyMap[left].CompareTo(KeyMap[right]);
         }
     }
 }
