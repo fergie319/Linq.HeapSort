@@ -12,46 +12,17 @@ namespace Linq.HeapSort
     /// array of integers matching the size of the source enumerable (this is
     /// comparable to the footprint of the OrderedEnumerable used by OrderBy)
     /// </summary>
-    public class PriorityEnumerable<TSource, TKey> where TKey: IComparable<TKey>
+    public abstract class APriorityEnumerable<TSource>
     {
-        // TODO: Make three Priority enumerables with different type constraints?
-        //       Yes.  And use an abstract CompareKeys method
         public int TotalSorted { get; set; }
 
-        public bool MinHeap { get; private set; }
+        public bool MinHeap { get; protected set; }
 
-        public bool IsSorted { get; private set; }
+        public bool IsSorted { get; protected set; }
 
-        public TSource[] Source { get; private set; }
+        public TSource[] Source { get; protected set; }
 
-        // Use this for the implementation where no TKey is needed
-        // public Tuple<TSource, TKey>[] Heap { get; set; }
-
-        // TODO: Try out using two arrays, and use the HeapMap as an index array
-        //       If performance is still 2X worse than QuickSort, then try a third
-        //       array of TSource to see if the ElementAt(k) method is the source
-        //       of the problem.
         public int[] HeapMap { get; set; }
-
-        // Use this for the implementation (x2) for keySelector -
-        // use type constraint for IComparer when no comparer is provided
-        public TKey[] KeyMap { get; set; }
-
-        public PriorityEnumerable(IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
-        {
-            Source = new TSource[source.Count()];
-            HeapMap = new int[Source.Length];
-            KeyMap = new TKey[Source.Length];
-            var i = 0;
-            foreach (var item in source)
-            {
-                HeapMap[i] = i;
-                Source[i] = item;
-                KeyMap[i] = keySelector(item);
-                i++;
-            }
-            TotalSorted = 0;
-        }
 
         public IEnumerable<TSource> Sort()
         {
@@ -177,9 +148,87 @@ namespace Linq.HeapSort
             HeapMap[indexB] = temp;
         }
 
-        protected virtual int CompareKeys(int left, int right)
+        protected abstract int CompareKeys(int left, int right);
+    }
+
+    public class PriorityEnumerable<TSource> : APriorityEnumerable<TSource> where TSource: IComparable<TSource>
+    {
+        public PriorityEnumerable(IEnumerable<TSource> source)
+        {
+            Source = new TSource[source.Count()];
+            HeapMap = new int[Source.Length];
+            var i = 0;
+            foreach (var item in source)
+            {
+                HeapMap[i] = i;
+                Source[i] = item;
+                i++;
+            }
+            TotalSorted = 0;
+        }
+
+        protected override int CompareKeys(int left, int right)
+        {
+            return Source[left].CompareTo(Source[right]);
+        }
+    }
+
+    public class PriorityEnumerable<TSource, TKey> : APriorityEnumerable<TSource> where TKey: IComparable<TKey>
+    {
+        // Use this for the implementation (x2) for keySelector -
+        // use type constraint for IComparer when no comparer is provided
+        public TKey[] KeyMap { get; set; }
+
+        public PriorityEnumerable(IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
+        {
+            Source = new TSource[source.Count()];
+            HeapMap = new int[Source.Length];
+            KeyMap = new TKey[Source.Length];
+            var i = 0;
+            foreach (var item in source)
+            {
+                HeapMap[i] = i;
+                Source[i] = item;
+                KeyMap[i] = keySelector(item);
+                i++;
+            }
+            TotalSorted = 0;
+        }
+
+        protected override int CompareKeys(int left, int right)
         {
             return KeyMap[left].CompareTo(KeyMap[right]);
+        }
+    }
+
+    public class PriorityEnumerableWithComparer<TSource, TKey> : APriorityEnumerable<TSource>
+    {
+        // Use this for the implementation (x2) for keySelector -
+        // use type constraint for IComparer when no comparer is provided
+        public TKey[] KeyMap { get; set; }
+
+        public IComparer<TKey> Comparer { get; set; }
+
+        public PriorityEnumerableWithComparer(IEnumerable<TSource> source, Func<TSource, TKey> keySelector, IComparer<TKey> comparer)
+        {
+            Source = new TSource[source.Count()];
+            HeapMap = new int[Source.Length];
+            KeyMap = new TKey[Source.Length];
+            Comparer = comparer;
+            var i = 0;
+            foreach (var item in source)
+            {
+                HeapMap[i] = i;
+                Source[i] = item;
+                KeyMap[i] = keySelector(item);
+                i++;
+            }
+            TotalSorted = 0;
+        }
+
+        protected override int CompareKeys(int left, int right)
+        {
+            return Comparer.Compare(KeyMap[left], KeyMap[right]);
         }
     }
 }
