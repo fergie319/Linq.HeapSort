@@ -64,7 +64,11 @@ namespace Linq.HeapSort
             if (HeapMap.Length - TotalSorted != 0)
             {
                 root = HeapMap[0];
-                Swap(0, HeapMap.Length - TotalSorted - 1);
+                var lastIndex = HeapMap.Length - TotalSorted - 1;
+                int temp = HeapMap[0];
+                HeapMap[0] = HeapMap[lastIndex];
+                HeapMap[lastIndex] = temp;
+
                 TotalSorted++;
                 var remaining = HeapMap.Length - TotalSorted;
                 if (remaining > 1)
@@ -90,62 +94,66 @@ namespace Linq.HeapSort
         /// <summary>Re-heapifies from the given index</summary>
         private void DownHeap(int index, int n)
         {
-            var leftIndex = 2*index + 1;
-            var rightIndex = 2*index + 2;
-            
-            if (!MinHeap)
+            var stack = new Stack<int>();
+            stack.Push(index);
+
+            while (stack.Count > 0)
             {
-                var largest = index;
-                if (leftIndex < n && CompareKeys(HeapMap[leftIndex], HeapMap[largest]) > 0)
-                {
-                    largest = leftIndex;
-                }
+                index = stack.Pop();
+                var leftIndex = 2 * index + 1;
+                var rightIndex = 2 * index + 2;
 
-                if (rightIndex < n && CompareKeys(HeapMap[rightIndex], HeapMap[largest]) > 0)
+                if (!MinHeap)
                 {
-                    largest = rightIndex;
-                }
-
-                if (largest != index)
-                {
-                    Swap(index, largest);
-
-                    if (largest < n)
+                    var largest = index;
+                    if (leftIndex < n && CompareKeys(HeapMap[leftIndex], HeapMap[largest]) > 0)
                     {
-                        DownHeap(largest, n);
+                        largest = leftIndex;
+                    }
+
+                    if (rightIndex < n && CompareKeys(HeapMap[rightIndex], HeapMap[largest]) > 0)
+                    {
+                        largest = rightIndex;
+                    }
+
+                    if (largest != index)
+                    {
+                        int temp = HeapMap[largest];
+                        HeapMap[largest] = HeapMap[index];
+                        HeapMap[index] = temp;
+
+                        if (2*largest + 1 < n)
+                        {
+                            stack.Push(largest);
+                        }
+                    }
+                }
+                else
+                {
+                    var smallest = index;
+                    if (leftIndex < n && CompareKeys(HeapMap[leftIndex], HeapMap[smallest]) < 0)
+                    {
+                        smallest = leftIndex;
+                    }
+
+                    if (rightIndex < n && CompareKeys(HeapMap[rightIndex], HeapMap[smallest]) < 0)
+                    {
+                        smallest = rightIndex;
+                    }
+
+                    if (smallest != index)
+                    {
+                        int temp = HeapMap[smallest];
+                        HeapMap[smallest] = HeapMap[index];
+                        HeapMap[index] = temp;
+
+                        if (2*smallest + 1 < n)
+                        {
+                            stack.Push(smallest);
+                        }
                     }
                 }
             }
-            else
-            {
-                var smallest = index;
-                if (leftIndex < n && CompareKeys(HeapMap[leftIndex], HeapMap[smallest]) < 0)
-                {
-                    smallest = leftIndex;
-                }
-
-                if (rightIndex < n && CompareKeys(HeapMap[rightIndex], HeapMap[smallest]) < 0)
-                {
-                    smallest = rightIndex;
-                }
-
-                if (smallest != index)
-                {
-                    Swap(index, smallest);
-
-                    if (smallest < n)
-                    {
-                        DownHeap(smallest, n);
-                    }
-                }
-            }
-        }
-
-        private void Swap(int indexA, int indexB)
-        {
-            int temp = HeapMap[indexA];
-            HeapMap[indexA] = HeapMap[indexB];
-            HeapMap[indexB] = temp;
         }
 
         protected abstract int CompareKeys(int left, int right);
@@ -157,11 +165,10 @@ namespace Linq.HeapSort
         {
             Source = new TSource[source.Count()];
             HeapMap = new int[Source.Length];
-            var i = 0;
-            foreach (var item in source)
+            for (var i = 0; i < Source.Length; i++)
             {
                 HeapMap[i] = i;
-                Source[i] = item;
+                Source[i] = source.ElementAt(i);
                 i++;
             }
             TotalSorted = 0;
@@ -184,13 +191,11 @@ namespace Linq.HeapSort
             Source = new TSource[source.Count()];
             HeapMap = new int[Source.Length];
             KeyMap = new TKey[Source.Length];
-            var i = 0;
-            foreach (var item in source)
+            for (var i = 0; i < Source.Length; i++)
             {
                 HeapMap[i] = i;
-                Source[i] = item;
-                KeyMap[i] = keySelector(item);
-                i++;
+                Source[i] = source.ElementAt(i);
+                KeyMap[i] = keySelector(Source[i]);
             }
             TotalSorted = 0;
         }
@@ -215,13 +220,11 @@ namespace Linq.HeapSort
             HeapMap = new int[Source.Length];
             KeyMap = new TKey[Source.Length];
             Comparer = comparer;
-            var i = 0;
-            foreach (var item in source)
+            for (var i = 0; i < Source.Length; i++)
             {
                 HeapMap[i] = i;
-                Source[i] = item;
-                KeyMap[i] = keySelector(item);
-                i++;
+                Source[i] = source.ElementAt(i);
+                KeyMap[i] = keySelector(Source[i]);
             }
             TotalSorted = 0;
         }

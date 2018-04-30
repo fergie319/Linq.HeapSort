@@ -79,7 +79,7 @@ it will always take the same amount of time.");
 
                 // TODO: Take average ticks for 100 of 10K items to gauge performance improvements of Heap implementation
                 // TODO: Heap Performance improvements 
-                //        - Manual Stack instead of Recursion
+                //        X Manual Stack instead of Recursion
                 //        - Insertion sort when list <= 10
                 //        - Make sure recursion does not occur on leaves (trick: throw exception if left-node index is >= n)
                 // TODO: Implement Min-Heap
