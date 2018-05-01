@@ -233,7 +233,7 @@ namespace Linq.HeapSort
     {
         /// <summary>Initializes a new instance of the <see cref="PriorityEnumerable{TSource}"/> class.</summary>
         /// <param name="source">The source.</param>
-        /// <param name="minHeap">if set to <c>true</c> then creates a min-heap.</param>
+        /// <param name="minHeap">if set to <c>true</c> then creates a min-heap (ascending order).</param>
         public PriorityEnumerable(IEnumerable<TSource> source) : this(source, true)
         {
         }
@@ -247,7 +247,7 @@ namespace Linq.HeapSort
             _source = new TSource[source.Count()];
             _heapMap = new int[_source.Length];
             var i = 0;
-            foreach (var item in _source)
+            foreach (var item in source)
             {
                 _source[i] = item;
                 _heapMap[i] = i;
@@ -289,9 +289,10 @@ namespace Linq.HeapSort
         /// <summary>Initializes a new instance of the <see cref="PriorityEnumerable{TSource, TKey}"/> class.</summary>
         /// <param name="source">The source.</param>
         /// <param name="keySelector">The key selector.</param>
-        /// <param name="minHeap">if set to <c>true</c> then creates a min-heap.</param>
+        /// <param name="minHeap">if set to <c>true</c> then creates a min-heap (ascending order).</param>
         public PriorityEnumerable(IEnumerable<TSource> source, Func<TSource, TKey> keySelector, bool minHeap)
         {
+            _minHeap = minHeap;
             _source = new TSource[source.Count()];
             _heapMap = new int[_source.Length];
             _keyMap = new TKey[_source.Length];
@@ -343,7 +344,7 @@ namespace Linq.HeapSort
         /// <param name="source">The source.</param>
         /// <param name="keySelector">The key selector.</param>
         /// <param name="comparer">The comparer.</param>
-        /// <param name="minHeap">if set to <c>true</c> then creates a min-heap.</param>
+        /// <param name="minHeap">if set to <c>true</c> then creates a min-heap (ascending order).</param>
         public PriorityEnumerableWithComparer(IEnumerable<TSource> source, Func<TSource, TKey> keySelector, IComparer<TKey> comparer, bool minHeap)
         {
             _minHeap = minHeap;
