@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ExampleApp
 {
@@ -76,13 +74,6 @@ it will always take the same amount of time.");
                     ((double)quickStopWatch.ElapsedTicks - (double)heapStopWatch.ElapsedTicks) / (double)quickStopWatch.ElapsedTicks * 100);
                 Console.WriteLine("Or, Quick Sort is {0:N2}% slower",
                     ((double)quickStopWatch.ElapsedTicks - (double)heapStopWatch.ElapsedTicks) / (double)heapStopWatch.ElapsedTicks * 100);
-
-                // TODO: Take average ticks for 100 of 10K items to gauge performance improvements of Heap implementation
-                // TODO: Heap Performance improvements 
-                //        X Manual Stack instead of Recursion
-                //        X Insertion sort when list <= 10
-                //        - Make sure recursion does not occur on leaves (trick: throw exception if left-node index is >= n)
-                // TODO: Implement Min-Heap
             } while (true);
         }
     }

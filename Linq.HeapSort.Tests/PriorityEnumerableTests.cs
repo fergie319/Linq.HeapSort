@@ -186,9 +186,10 @@ namespace Linq.HeapSort.Tests
         }
 
         [Test]
-        public void PriorityExtensions_PriorityOrderByDescending_SpeedTest_2500K_of_10K_Success()
+        public void PriorityExtensions_PriorityOrderByDescending_SpeedTest_4000_of_10K_Success()
         {
             var rand = new Random(DateTime.Now.Millisecond);
+            var take = 4000;
 
             var heapStopWatch = new Stopwatch();
             var quickStopWatch = new Stopwatch();
@@ -206,16 +207,16 @@ namespace Linq.HeapSort.Tests
 
                 // Execute Test and verify
                 heapStopWatch.Start();
-                var result = intArray.PriorityOrderByDescending().Take(2500).ToList();
+                var result = intArray.PriorityOrderByDescending().Take(take).ToList();
                 heapStopWatch.Stop();
 
                 quickStopWatch.Start();
-                var quickResult = expected.OrderByDescending(k => k).Take(2500).ToList();
+                var quickResult = expected.OrderByDescending(k => k).Take(take).ToList();
                 quickStopWatch.Stop();
                 CollectionAssert.AreEqual(quickResult, result);
             }
 
-            Assert.Greater(quickStopWatch.ElapsedTicks / 100, heapStopWatch.ElapsedTicks / 100, "Expected {0} to be greater than {1}", quickStopWatch.ElapsedTicks / 100, heapStopWatch.ElapsedTicks / 100);
+            Assert.Greater(quickStopWatch.ElapsedTicks, heapStopWatch.ElapsedTicks, "Expected {0} to be greater than {1}", quickStopWatch.ElapsedTicks, heapStopWatch.ElapsedTicks);
         }
 
         [Test]
