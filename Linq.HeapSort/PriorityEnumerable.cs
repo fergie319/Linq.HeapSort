@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 
 namespace Linq.HeapSort
@@ -14,19 +13,19 @@ namespace Linq.HeapSort
     public abstract class APriorityEnumerable<TSource>
     {
         /// <summary>The number of items sorted so far total sorted</summary>
-        protected int _totalSorted;
+        protected int TotalSorted { get; set; }
 
         /// <summary>Indicates whether this is a Min-Heap or a Max-Heap</summary>
-        protected bool _minHeap;
+        protected bool MinHeap { get; set; }
 
         /// <summary>Indicates whether the list is fully sorted or not</summary>
-        protected bool _isSorted;
+        protected bool IsSorted { get; set; }
 
         /// <summary>The source array to sort</summary>
-        protected TSource[] _source;
+        protected TSource[] Source { get; set; }
 
         /// <summary>The heap datastructure - separate from source to allow for comparers and key selectors</summary>
-        protected int[] _heapMap;
+        protected int[] HeapMap { get; set; }
 
         /// <summary>Sorts this instance yielding one element a time.  The heap is
         /// built at a cost of O(n) and each item is then sorted at a cost of Log(n)
@@ -36,32 +35,22 @@ namespace Linq.HeapSort
         public IEnumerable<TSource> Sort()
         {
             BuildHeap();
-            while (!_isSorted)
+            while (!IsSorted)
             {
                 yield return Pop();
             }
         }
 
         /// <summary>
-        /// Builds a max heap with complexity O(n) by building from the bottom up.  Top-down
+        /// Builds the heap with complexity O(n) by building from the bottom up.  Top-down
         /// building of the heap by using the Heapify function is O(n*log(n)).
         /// </summary>
         private void BuildHeap()
         {
-            BuildHeap(false);
-        }
-
-        /// <summary>
-        /// Builds the heap with complexity O(n) by building from the bottom up.  Top-down
-        /// building of the heap by using the Heapify function is O(n*log(n)).
-        /// </summary>
-        /// <param name="minHeap">if set to <c>true</c> then the heap is built with smallest items on top; otherwise, largest items on top.</param>
-        private void BuildHeap(bool minHeap)
-        {
             // Loop through the heap array in reverse order
-            for (var i = _heapMap.Length / 2 - 1; i >= 0; i--)
+            for (var i = HeapMap.Length / 2 - 1; i >= 0; i--)
             {
-                DownHeap(i, _heapMap.Length);
+                DownHeap(i, HeapMap.Length);
             }
         }
 
@@ -70,17 +59,17 @@ namespace Linq.HeapSort
         private TSource Pop()
         {
             var root = -1;
-            var remaining = _heapMap.Length - _totalSorted;
+            var remaining = HeapMap.Length - TotalSorted;
             if (remaining > 10)
             {
-                root = _heapMap[0];
+                root = HeapMap[0];
                 var lastIndex = remaining - 1;
-                int temp = _heapMap[0];
-                _heapMap[0] = _heapMap[lastIndex];
-                _heapMap[lastIndex] = temp;
+                int temp = HeapMap[0];
+                HeapMap[0] = HeapMap[lastIndex];
+                HeapMap[lastIndex] = temp;
 
-                _totalSorted++;
-                remaining = _heapMap.Length - _totalSorted;
+                TotalSorted++;
+                remaining = HeapMap.Length - TotalSorted;
                 if (remaining > 10)
                 {
                     DownHeap(0, remaining);
@@ -89,16 +78,16 @@ namespace Linq.HeapSort
             else if (remaining == 10)
             {
                 InsertionSort(remaining);
-                root = _heapMap[remaining - 1];
-                _totalSorted++;
+                root = HeapMap[remaining - 1];
+                TotalSorted++;
             }
             else if (remaining > 0)
             {
-                root = _heapMap[remaining - 1];
-                _totalSorted++;
-                if (_totalSorted == _heapMap.Length)
+                root = HeapMap[remaining - 1];
+                TotalSorted++;
+                if (TotalSorted == HeapMap.Length)
                 {
-                    _isSorted = true;
+                    IsSorted = true;
                 }
             }
 
@@ -107,7 +96,7 @@ namespace Linq.HeapSort
                 return default(TSource);
             }
 
-            return _source[root];
+            return Source[root];
         }
 
         /// <summary>Re-heapifies from the given index</summary>
@@ -123,24 +112,24 @@ namespace Linq.HeapSort
                 var leftIndex = 2 * index + 1;
                 var rightIndex = 2 * index + 2;
 
-                if (!_minHeap)
+                if (!MinHeap)
                 {
                     var largest = index;
-                    if (CompareKeys(_heapMap[leftIndex], _heapMap[largest]) > 0)
+                    if (CompareKeys(HeapMap[leftIndex], HeapMap[largest]) > 0)
                     {
                         largest = leftIndex;
                     }
 
-                    if (rightIndex < n && CompareKeys(_heapMap[rightIndex], _heapMap[largest]) > 0)
+                    if (rightIndex < n && CompareKeys(HeapMap[rightIndex], HeapMap[largest]) > 0)
                     {
                         largest = rightIndex;
                     }
 
                     if (largest != index)
                     {
-                        int temp = _heapMap[largest];
-                        _heapMap[largest] = _heapMap[index];
-                        _heapMap[index] = temp;
+                        int temp = HeapMap[largest];
+                        HeapMap[largest] = HeapMap[index];
+                        HeapMap[index] = temp;
 
                         if (2 * largest + 1 < n)
                         {
@@ -151,21 +140,21 @@ namespace Linq.HeapSort
                 else
                 {
                     var smallest = index;
-                    if (CompareKeys(_heapMap[leftIndex], _heapMap[smallest]) < 0)
+                    if (CompareKeys(HeapMap[leftIndex], HeapMap[smallest]) < 0)
                     {
                         smallest = leftIndex;
                     }
 
-                    if (rightIndex < n && CompareKeys(_heapMap[rightIndex], _heapMap[smallest]) < 0)
+                    if (rightIndex < n && CompareKeys(HeapMap[rightIndex], HeapMap[smallest]) < 0)
                     {
                         smallest = rightIndex;
                     }
 
                     if (smallest != index)
                     {
-                        int temp = _heapMap[smallest];
-                        _heapMap[smallest] = _heapMap[index];
-                        _heapMap[index] = temp;
+                        int temp = HeapMap[smallest];
+                        HeapMap[smallest] = HeapMap[index];
+                        HeapMap[index] = temp;
 
                         if (2 * smallest + 1 < n)
                         {
@@ -180,17 +169,17 @@ namespace Linq.HeapSort
         /// <param name="size">The number of items to sort in the list</param>
         private void InsertionSort(int size)
         {
-            if (!_minHeap)
+            if (!MinHeap)
             {
                 var i = 1;
                 while (i < size)
                 {
                     var j = i;
-                    while (j > 0 && CompareKeys(_heapMap[j - 1], _heapMap[j]) > 0)
+                    while (j > 0 && CompareKeys(HeapMap[j - 1], HeapMap[j]) > 0)
                     {
-                        int temp = _heapMap[j - 1];
-                        _heapMap[j - 1] = _heapMap[j];
-                        _heapMap[j] = temp;
+                        int temp = HeapMap[j - 1];
+                        HeapMap[j - 1] = HeapMap[j];
+                        HeapMap[j] = temp;
                         j--;
                     }
 
@@ -203,11 +192,11 @@ namespace Linq.HeapSort
                 while (i < size)
                 {
                     var j = i;
-                    while (j > 0 && CompareKeys(_heapMap[j - 1], _heapMap[j]) < 0)
+                    while (j > 0 && CompareKeys(HeapMap[j - 1], HeapMap[j]) < 0)
                     {
-                        int temp = _heapMap[j - 1];
-                        _heapMap[j - 1] = _heapMap[j];
-                        _heapMap[j] = temp;
+                        int temp = HeapMap[j - 1];
+                        HeapMap[j - 1] = HeapMap[j];
+                        HeapMap[j] = temp;
                         j--;
                     }
 
@@ -233,7 +222,6 @@ namespace Linq.HeapSort
     {
         /// <summary>Initializes a new instance of the <see cref="PriorityEnumerable{TSource}"/> class.</summary>
         /// <param name="source">The source.</param>
-        /// <param name="minHeap">if set to <c>true</c> then creates a min-heap (ascending order).</param>
         public PriorityEnumerable(IEnumerable<TSource> source) : this(source, true)
         {
         }
@@ -243,17 +231,22 @@ namespace Linq.HeapSort
         /// <param name="minHeap">if set to <c>true</c> then creates a min-heap.</param>
         public PriorityEnumerable(IEnumerable<TSource> source, bool minHeap)
         {
-            _minHeap = minHeap;
-            _source = new TSource[source.Count()];
-            _heapMap = new int[_source.Length];
+            if (source == null)
+            {
+                throw new ArgumentNullException("source");
+            }
+
+            MinHeap = minHeap;
+            Source = new TSource[source.Count()];
+            HeapMap = new int[Source.Length];
             var i = 0;
             foreach (var item in source)
             {
-                _source[i] = item;
-                _heapMap[i] = i;
+                Source[i] = item;
+                HeapMap[i] = i;
                 i++;
             }
-            _totalSorted = 0;
+            TotalSorted = 0;
         }
 
         /// <summary>Compares the keys at indexes 'left' and 'right'</summary>
@@ -262,7 +255,7 @@ namespace Linq.HeapSort
         /// <returns>-1 if left less than right; 0 if left equals right; 1 if left greater than right</returns>
         protected override int CompareKeys(int left, int right)
         {
-            return _source[left].CompareTo(_source[right]);
+            return Source[left].CompareTo(Source[right]);
         }
     }
 
@@ -292,19 +285,29 @@ namespace Linq.HeapSort
         /// <param name="minHeap">if set to <c>true</c> then creates a min-heap (ascending order).</param>
         public PriorityEnumerable(IEnumerable<TSource> source, Func<TSource, TKey> keySelector, bool minHeap)
         {
-            _minHeap = minHeap;
-            _source = new TSource[source.Count()];
-            _heapMap = new int[_source.Length];
-            _keyMap = new TKey[_source.Length];
+            if (source == null)
+            {
+                throw new ArgumentNullException("source");
+            }
+
+            if (keySelector == null)
+            {
+                throw new ArgumentNullException("keySelector");
+            }
+
+            MinHeap = minHeap;
+            Source = new TSource[source.Count()];
+            HeapMap = new int[Source.Length];
+            _keyMap = new TKey[Source.Length];
             var i = 0;
             foreach (var item in source)
             {
-                _source[i] = item;
+                Source[i] = item;
                 _keyMap[i] = keySelector(item);
-                _heapMap[i] = i;
+                HeapMap[i] = i;
                 i++;
             }
-            _totalSorted = 0;
+            TotalSorted = 0;
         }
 
         /// <summary>Compares the keys at indexes 'left' and 'right'</summary>
@@ -347,20 +350,30 @@ namespace Linq.HeapSort
         /// <param name="minHeap">if set to <c>true</c> then creates a min-heap (ascending order).</param>
         public PriorityEnumerableWithComparer(IEnumerable<TSource> source, Func<TSource, TKey> keySelector, IComparer<TKey> comparer, bool minHeap)
         {
-            _minHeap = minHeap;
-            _source = new TSource[source.Count()];
-            _heapMap = new int[_source.Length];
-            KeyMap = new TKey[_source.Length];
+            if (source == null)
+            {
+                throw new ArgumentNullException("source");
+            }
+
+            if (keySelector == null)
+            {
+                throw new ArgumentNullException("keySelector");
+            }
+
+            MinHeap = minHeap;
+            Source = new TSource[source.Count()];
+            HeapMap = new int[Source.Length];
+            KeyMap = new TKey[Source.Length];
             Comparer = comparer;
             var i = 0;
             foreach (var item in source)
             {
-                _source[i] = item;
+                Source[i] = item;
                 KeyMap[i] = keySelector(item);
-                _heapMap[i] = i;
+                HeapMap[i] = i;
                 i++;
             }
-            _totalSorted = 0;
+            TotalSorted = 0;
         }
 
         /// <summary>Compares the keys at indexes 'left' and 'right'</summary>

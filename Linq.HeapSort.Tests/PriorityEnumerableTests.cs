@@ -130,7 +130,7 @@ namespace Linq.HeapSort.Tests
         }
 
         [Test]
-        public void PriorityExtensions_PriorityOrderBy_KeySelector_SpeedTest_100_of_10K_Success()
+        public void PriorityExtensions_PriorityOrderBy_KeySelector_SpeedTest_100_of_100K_Success()
         {
             var intArray = new List<int>();
             var expected = new List<int>();
@@ -158,7 +158,7 @@ namespace Linq.HeapSort.Tests
         }
 
         [Test]
-        public void PriorityExtensions_PriorityOrderBy_KeySelector_WithComparer_SpeedTest_100_of_10K_Success()
+        public void PriorityExtensions_PriorityOrderBy_KeySelector_WithComparer_SpeedTest_100_of_100K_Success()
         {
             var intArray = new List<int>();
             var expected = new List<int>();
