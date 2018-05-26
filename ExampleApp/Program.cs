@@ -1,18 +1,27 @@
 ﻿using Linq.HeapSort;
+using log4net;
+using log4net.Config;
+using log4net.Core;
+using log4net.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 
 namespace ExampleApp
 {
     class Program
     {
+        private static readonly ILog Log = LogManager.GetLogger(typeof(Program));
+
         static void Main(string[] args)
         {
+            XmlConfigurator.Configure(new FileInfo("log4net.config"));
+
             Console.WriteLine(
 @"This simple app will run sorting time comparisons between
-the PriorityEnumerable and the default OrderBy randomly generated
+the PriorityEnumerable and the default OrderBy with randomly generated
 integers ranging from 0-10,000.
 
 The OrderBy implementation has to sort the entire list up front, so
@@ -23,7 +32,7 @@ it will always take the same amount of time.");
             var input = string.Empty;
             do
             {
-                // Read in and parse the size of the list to text
+                // Read in and parse the size of the list to test
                 Console.WriteLine("Enter size of list to sort:");
                 input = Console.ReadLine();
                 if (input == "Exit")
@@ -33,47 +42,72 @@ it will always take the same amount of time.");
 
                 var size = int.Parse(input, System.Globalization.NumberStyles.AllowThousands);
 
-                // Read in and parse the number of items to take
-                Console.WriteLine("Enter number of items to take (from 1 to {0}", size);
+                // Read in and parse the number of samples to run per test
+                Console.WriteLine("Enter number of samples per test run:");
                 input = Console.ReadLine();
                 if (input == "Exit")
                 {
                     break;
                 }
 
-                var take = int.Parse(input, System.Globalization.NumberStyles.AllowThousands);
+                var samples = int.Parse(input, System.Globalization.NumberStyles.AllowThousands);
 
-                // Generate two identical lists of random numbers
-                var testListOne = new List<int>();
-                var testListTwo = new List<int>();
-                var rand = new Random(DateTime.Now.Millisecond);
-                for (var i = 0; i < size; i++)
+                // Read in and parse the value to increment the 'take' value by for each test
+                Console.WriteLine("Enter the number to increment each test by (the first test use this value):");
+                input = Console.ReadLine();
+                if (input == "Exit")
                 {
-                    var val = rand.Next(10000);
-                    testListOne.Add(val);
-                    testListTwo.Add(val);
+                    break;
                 }
 
-                // Test OrderBy Ascending
-                Console.WriteLine("Testing OrderBy...");
-                var quickStopWatch = new Stopwatch();
-                quickStopWatch.Start();
-                var quickResult = testListOne.OrderByDescending(k => k).Take(take).ToList();
-                quickStopWatch.Stop();
+                var increment = int.Parse(input, System.Globalization.NumberStyles.AllowThousands);
+                var take = increment;
+                while (take <= size)
+                {
+                    Console.WriteLine("Testing Take = {0}", take);
 
-                Console.WriteLine("Testing HeapSort...");
-                var priorityEnumerable = new PriorityEnumerable<int, int>(testListTwo, t => t);
-                var heapStopWatch = new Stopwatch();
-                heapStopWatch.Start();
-                var result = priorityEnumerable.Sort().Take(take).ToList();
-                heapStopWatch.Stop();
+                    var quickStopWatch = new Stopwatch();
+                    var heapStopWatch = new Stopwatch();
+                    for (var i = 0; i < samples; i++)
+                    {
+                        // Generate two identical lists of random numbers
+                        var testListOne = new List<int>();
+                        var testListTwo = new List<int>();
+                        var rand = new Random(DateTime.Now.Millisecond);
+                        for (var j = 0; j < size; j++)
+                        {
+                            var val = rand.Next(10000);
+                            testListOne.Add(val);
+                            testListTwo.Add(val);
+                        }
 
-                Console.WriteLine("QuickSort: {0}", quickStopWatch.ElapsedTicks);
-                Console.WriteLine("HeapSort: {0}", heapStopWatch.ElapsedTicks);
-                Console.WriteLine("HeapSort is {0:N2}% Faster",
-                    ((double)quickStopWatch.ElapsedTicks - (double)heapStopWatch.ElapsedTicks) / (double)quickStopWatch.ElapsedTicks * 100);
-                Console.WriteLine("Or, Quick Sort is {0:N2}% slower",
-                    ((double)quickStopWatch.ElapsedTicks - (double)heapStopWatch.ElapsedTicks) / (double)heapStopWatch.ElapsedTicks * 100);
+                        // Test OrderBy Ascending
+                        quickStopWatch.Start();
+                        var quickResult = testListOne.OrderByDescending(k => k).Take(take).ToList();
+                        quickStopWatch.Stop();
+
+                        var priorityEnumerable = new PriorityEnumerable<int, int>(testListTwo, t => t);
+                        heapStopWatch.Start();
+                        var result = priorityEnumerable.Sort().Take(take).ToList();
+                        heapStopWatch.Stop();
+                    }
+
+                    // Log the total ticks for the heap sort
+                    var logData = new LoggingEventData();
+                    logData.Level = Level.Debug;
+                    logData.Properties = new PropertiesDictionary();
+                    logData.Properties["HeapElapsedTicks"] = heapStopWatch.ElapsedTicks;
+                    logData.Properties["QuickElapsedTicks"] = quickStopWatch.ElapsedTicks;
+                    logData.Properties["QuickMinusHeapDifference"] = quickStopWatch.ElapsedTicks - heapStopWatch.ElapsedTicks;
+                    logData.Properties["Size"] = size;
+                    logData.Properties["Take"] = take;
+                    logData.Properties["Samples"] = samples;
+                    var logEvent = new LoggingEvent(logData);
+                    Log.Logger.Log(logEvent);
+
+                    // Increment take for the next test
+                    take += increment;
+                }
             } while (true);
         }
     }
